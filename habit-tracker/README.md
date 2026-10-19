@@ -11,7 +11,8 @@ It also shows daily goals, streaks, a 7-day view and an 18-week history for each
 Your data is saved in your browser. You can **back it up to Google Drive** and load it
 again on another phone or computer.
 
-The app is plain HTML, CSS and JavaScript. There is no build step and no server code.
+The whole app is **one file**: `index.html`. It has the HTML, CSS and JavaScript inside.
+There is no build step and no server code. You can rename it, for example to `habit-tracker.html`.
 
 ## Run it
 
@@ -27,7 +28,10 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000>.
 
-To use it on your phone, put the `habit-tracker` folder on any static web host
+If you only want to try the app without Google Drive, you can also just open
+`index.html` in your browser.
+
+To use it on your phone, upload `index.html` to any static web host
 (for example GitHub Pages, Netlify or Cloudflare Pages). On the phone, use
 "Add to Home Screen" so it opens like an app.
 
@@ -66,13 +70,3 @@ to save its backup file in your Drive.
 
 You can also use **Download backup (.json)** and **Load backup file** to save a
 copy on your device without Google Drive.
-
-## Files
-
-| File            | What it does                              |
-| --------------- | ----------------------------------------- |
-| `index.html`    | Page layout and bottom tabs               |
-| `style.css`     | Styles (light and dark mode)              |
-| `app.js`        | All app logic, timers and Google Drive    |
-| `manifest.json` | Lets you add the app to your home screen  |
-| `icon.svg`      | App icon                                  |

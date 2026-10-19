@@ -6,9 +6,292 @@
   <title>Habit Tracker</title>
   <meta name="description" content="Track exercise, meditation and fasting. Back up to Google Drive.">
   <meta name="theme-color" content="#0f766e">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Cpath d='M18 33l9 9 19-20' fill='none' stroke='%23fff' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Cpath d='M18 33l9 9 19-20' fill='none' stroke='%23fff' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <style>
+:root {
+  --bg: #f4f6f8;
+  --card: #ffffff;
+  --text: #17202a;
+  --muted: #5f6b7a;
+  --line: #dde3ea;
+  --accent: #0f766e;
+  --exercise: #ea580c;
+  --meditation: #7c3aed;
+  --fasting: #0284c7;
+  --ok: #15803d;
+  --warn: #b45309;
+  --bad: #b91c1c;
+  --cell-0: #e5e9ee;
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(15, 23, 42, .08);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f141a;
+    --card: #19212b;
+    --text: #e7edf3;
+    --muted: #9aa7b6;
+    --line: #2b3643;
+    --accent: #2dd4bf;
+    --exercise: #fb923c;
+    --meditation: #a78bfa;
+    --fasting: #38bdf8;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --cell-0: #253040;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+}
+
+h1, h2, h3 { line-height: 1.2; }
+h2 { font-size: 1.35rem; margin: 4px 0 14px; }
+h3 { font-size: 1.05rem; margin: 22px 0 10px; }
+
+a { color: var(--accent); }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+.topbar h1 { font-size: 1.15rem; margin: 0; }
+
+main { max-width: 760px; margin: 0 auto; padding: 16px; }
+
+.tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabbar a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 2px;
+  font-size: .72rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+.tabbar a span { font-size: 1.2rem; }
+.tabbar a.active { color: var(--accent); font-weight: 600; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.cards { display: grid; gap: 14px; }
+@media (min-width: 640px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+
+.habit-card { border-top: 4px solid var(--c); margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.habit-card .title { font-weight: 600; color: var(--c); }
+.habit-card .value { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.habit-card .btn { margin-top: auto; }
+
+.c-exercise { --c: var(--exercise); }
+.c-meditation { --c: var(--meditation); }
+.c-fasting { --c: var(--fasting); }
+
+.bar { height: 8px; border-radius: 99px; background: var(--cell-0); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--c, var(--accent)); border-radius: 99px; }
+
+.muted { color: var(--muted); font-size: .9rem; }
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: .78rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--ok) 15%, transparent);
+  color: var(--ok);
+}
+.badge.no { background: color-mix(in srgb, var(--muted) 15%, transparent); color: var(--muted); }
+
+/* Forms */
+form { display: grid; gap: 12px; }
+.row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+label { display: grid; gap: 4px; font-size: .9rem; color: var(--muted); }
+input, select, textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 100%;
+  min-width: 0;
+}
+textarea { resize: vertical; min-height: 44px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.check { display: flex; align-items: center; gap: 10px; color: var(--text); }
+.check input { width: 20px; height: 20px; }
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 16px;
+  cursor: pointer;
+  background: var(--c, var(--accent));
+  color: #fff;
+}
+@media (prefers-color-scheme: dark) { .btn { color: #0f141a; } }
+a.btn { display: block; text-align: center; text-decoration: none; }
+.btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
+.btn.danger { background: var(--bad); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn-row .btn { flex: 1 1 auto; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  font: inherit;
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.chip:disabled { opacity: .5; cursor: not-allowed; }
+.chip.on { background: var(--c, var(--accent)); border-color: transparent; color: #fff; }
+@media (prefers-color-scheme: dark) { .chip.on { color: #0f141a; } }
+
+/* Entry lists */
+.entries { list-style: none; margin: 0; padding: 0; }
+.entry {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.entry:last-child { border-bottom: 0; }
+.entry .notes { white-space: pre-wrap; word-break: break-word; }
+.icon-btn {
+  font: inherit;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+.icon-btn:hover { color: var(--bad); background: var(--bg); }
+.empty { color: var(--muted); text-align: center; padding: 14px 0; }
+
+/* Timers */
+.timer { text-align: center; }
+.big-time {
+  font-size: 3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+  margin: 8px 0;
+}
+.ring { position: relative; width: 220px; max-width: 100%; margin: 6px auto 10px; }
+.ring svg { display: block; width: 100%; height: auto; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 14; }
+.ring .track { stroke: var(--cell-0); }
+.ring .prog { stroke: var(--fasting); stroke-linecap: round; transition: stroke-dashoffset .5s; }
+.ring .inner {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.ring .inner .big-time { font-size: 1.9rem; margin: 0; }
+
+/* Week grid + heatmap */
+.week { display: grid; grid-template-columns: 92px repeat(7, 1fr); gap: 6px; align-items: center; }
+.week .head { font-size: .75rem; color: var(--muted); text-align: center; }
+.week .name { font-size: .85rem; }
+.cell { aspect-ratio: 1; border-radius: 6px; background: var(--cell-0); }
+.cell.l1 { background: color-mix(in srgb, var(--c) 40%, var(--cell-0)); }
+.cell.l2 { background: var(--c); }
+.cell.future { background: transparent; }
+.cell.today { outline: 2px solid var(--text); outline-offset: 1px; }
+
+.heat { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; grid-template-rows: repeat(7, 1fr); gap: 3px; }
+.heat .cell { border-radius: 3px; }
+.legend { display: flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); margin-top: 8px; }
+.legend .cell { width: 12px; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 12px; }
+.stat { background: var(--bg); border-radius: 10px; padding: 10px; }
+.stat b { display: block; font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.stat span { font-size: .8rem; color: var(--muted); }
+
+/* Status pill */
+.pill {
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 600;
+  border-radius: 99px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pill.ok { color: var(--ok); }
+.pill.warn { color: var(--warn); }
+.pill.bad { color: var(--bad); }
+
+.help { font-size: .9rem; color: var(--muted); }
+.help ol { padding-left: 20px; margin: 6px 0; }
+code { font-size: .85em; background: var(--bg); padding: 1px 5px; border-radius: 5px; word-break: break-all; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 10;
+  max-width: calc(100% - 32px);
+  background: var(--text);
+  color: var(--bg);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: .92rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .2);
+}
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -37,6 +320,1160 @@
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <input id="import-file" type="file" accept="application/json,.json" hidden>
 
-  <script src="app.js"></script>
+  <script>
+'use strict';
+
+// Habit Tracker: exercise, meditation and fasting.
+// Data lives in localStorage and can be backed up to Google Drive.
+
+const STORE_KEY = 'habitTracker.data.v1';
+const META_KEY = 'habitTracker.meta.v1';
+const TOKEN_KEY = 'habitTracker.token';
+const BACKUP_FILE = 'habit-tracker-backup.json';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+
+const EXERCISE_TYPES = ['Walking', 'Running', 'Cycling', 'Strength', 'Yoga', 'Swimming', 'HIIT', 'Sports', 'Stretching', 'Other'];
+const INTENSITIES = ['Light', 'Moderate', 'Hard'];
+const MEDITATION_TYPES = ['Mindfulness', 'Breathing', 'Body scan', 'Loving-kindness', 'Guided', 'Walking', 'Other'];
+const MED_PRESETS = [5, 10, 15, 20, 30];
+const FAST_GOALS = [12, 13, 14, 16, 18, 20, 24, 36, 48];
+const HABITS = [
+  { key: 'exercise', label: 'Exercise', css: 'c-exercise' },
+  { key: 'meditation', label: 'Meditation', css: 'c-meditation' },
+  { key: 'fasting', label: 'Fasting', css: 'c-fasting' },
+];
+
+// ---------- Storage ----------
+
+function defaultData() {
+  return {
+    version: 1,
+    settings: { goals: { exerciseMin: 30, meditationMin: 10, fastHours: 16 } },
+    exercise: [],
+    meditation: [],
+    fasting: [],
+    activeFast: null,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function normalize(d) {
+  const base = defaultData();
+  if (!d || typeof d !== 'object') return base;
+  const goals = Object.assign({}, base.settings.goals, d.settings && d.settings.goals);
+  return {
+    version: 1,
+    settings: { goals },
+    exercise: Array.isArray(d.exercise) ? d.exercise : [],
+    meditation: Array.isArray(d.meditation) ? d.meditation : [],
+    fasting: Array.isArray(d.fasting) ? d.fasting : [],
+    activeFast: d.activeFast && d.activeFast.start ? d.activeFast : null,
+    updatedAt: d.updatedAt || base.updatedAt,
+  };
+}
+
+function isValidBackup(d) {
+  return d && typeof d === 'object' &&
+    Array.isArray(d.exercise) && Array.isArray(d.meditation) && Array.isArray(d.fasting);
+}
+
+function loadJSON(store, key, fallback) {
+  try {
+    const v = store.getItem(key);
+    return v ? JSON.parse(v) : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+let data = normalize(loadJSON(localStorage, STORE_KEY, null));
+let meta = Object.assign(
+  { clientId: '', connected: false, autoBackup: true, fileId: null, lastBackup: null, pending: false },
+  loadJSON(localStorage, META_KEY, {})
+);
+
+function save() {
+  data.updatedAt = new Date().toISOString();
+  localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  scheduleBackup();
+  render();
+}
+
+function saveMeta() {
+  localStorage.setItem(META_KEY, JSON.stringify(meta));
+}
+
+function hasAnyEntries(d) {
+  return d.exercise.length + d.meditation.length + d.fasting.length > 0 || !!d.activeFast;
+}
+
+// ---------- Helpers ----------
+
+const $ = (sel) => document.querySelector(sel);
+const pad = (n) => String(n).padStart(2, '0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+function dayKey(d = new Date()) {
+  d = new Date(d);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+function parseKey(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function addDays(key, n) {
+  const d = parseKey(key);
+  d.setDate(d.getDate() + n);
+  return dayKey(d);
+}
+function fmtDay(key) {
+  return parseKey(key).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+function fmtDateTime(iso) {
+  return new Date(iso).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function fmtTime(iso) {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+function fmtClock(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+}
+function fmtMinSec(ms) {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
+}
+function toLocalInput(iso) {
+  const d = new Date(iso);
+  return `${dayKey(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function timeAgo(iso) {
+  const min = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min} min ago`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `${h} h ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+let toastTimer = null;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
+}
+
+// ---------- Stats ----------
+
+const fastHours = (f) => (new Date(f.end) - new Date(f.start)) / 3600000;
+const minutesOn = (list, key) => list.filter((e) => e.date === key).reduce((s, e) => s + (Number(e.minutes) || 0), 0);
+const fastsEndingOn = (key) => data.fasting.filter((f) => dayKey(f.end) === key);
+
+// 0 = nothing, 1 = some activity, 2 = goal reached
+function level(habit, key) {
+  const g = data.settings.goals;
+  if (habit === 'fasting') {
+    const fasts = fastsEndingOn(key);
+    if (!fasts.length) return 0;
+    return fasts.some((f) => fastHours(f) >= f.goalHours) ? 2 : 1;
+  }
+  const min = minutesOn(data[habit], key);
+  const goal = habit === 'exercise' ? g.exerciseMin : g.meditationMin;
+  if (min <= 0) return 0;
+  return min >= goal ? 2 : 1;
+}
+
+function doneDays(habit) {
+  const keys = habit === 'fasting' ? data.fasting.map((f) => dayKey(f.end)) : data[habit].map((e) => e.date);
+  return new Set([...new Set(keys)].filter((k) => level(habit, k) === 2));
+}
+
+function currentStreak(habit) {
+  const done = doneDays(habit);
+  let k = dayKey();
+  if (!done.has(k)) k = addDays(k, -1); // today is not over yet
+  let n = 0;
+  while (done.has(k)) { n++; k = addDays(k, -1); }
+  return n;
+}
+
+function bestStreak(habit) {
+  let best = 0, run = 0, prev = null;
+  for (const k of [...doneDays(habit)].sort()) {
+    run = prev && addDays(prev, 1) === k ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = k;
+  }
+  return best;
+}
+
+function sumRange(habit, days) {
+  const from = addDays(dayKey(), -(days - 1));
+  if (habit === 'fasting') {
+    const list = data.fasting.filter((f) => dayKey(f.end) >= from);
+    return { count: list.length, hours: list.reduce((s, f) => s + fastHours(f), 0) };
+  }
+  const list = data[habit].filter((e) => e.date >= from);
+  return { count: list.length, minutes: list.reduce((s, e) => s + (Number(e.minutes) || 0), 0) };
+}
+
+// ---------- Views ----------
+
+const VIEWS = ['today', 'exercise', 'meditate', 'fasting', 'history', 'settings'];
+let currentView = 'today';
+
+function showFromHash() {
+  const v = location.hash.slice(1);
+  currentView = VIEWS.includes(v) ? v : 'today';
+  for (const s of document.querySelectorAll('.view')) s.hidden = s.id !== 'view-' + currentView;
+  for (const a of document.querySelectorAll('.tabbar a')) a.classList.toggle('active', a.dataset.view === currentView);
+  render();
+  window.scrollTo(0, 0);
+}
+
+function render() {
+  const fn = {
+    today: renderToday,
+    exercise: renderExercise,
+    meditate: renderMeditate,
+    fasting: renderFasting,
+    history: renderHistory,
+    settings: renderSettings,
+  }[currentView];
+  $('#view-' + currentView).innerHTML = fn();
+  renderStatus();
+  tick();
+}
+
+function options(list, selected) {
+  return list.map((v) => `<option${v === selected ? ' selected' : ''}>${esc(v)}</option>`).join('');
+}
+
+function entryList(kind, items, describe) {
+  if (!items.length) return '<p class="empty">Nothing logged yet.</p>';
+  return `<ul class="entries">${items.map((e) => `
+    <li class="entry">
+      <div>${describe(e)}</div>
+      <button class="icon-btn" type="button" title="Delete" aria-label="Delete"
+        data-action="delete" data-kind="${kind}" data-id="${esc(e.id)}">✕</button>
+    </li>`).join('')}</ul>`;
+}
+
+const byDateDesc = (a, b) => (b.date + (b.createdAt || '')).localeCompare(a.date + (a.createdAt || ''));
+
+function weekGrid() {
+  const today = dayKey();
+  const days = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
+  const head = days.map((k) => `<div class="head">${esc(parseKey(k).toLocaleDateString(undefined, { weekday: 'narrow' }))}</div>`).join('');
+  const rows = HABITS.map((h) => `
+    <div class="name ${h.css}">${h.label}</div>
+    ${days.map((k) => `<div class="cell ${h.css} l${level(h.key, k)}${k === today ? ' today' : ''}" title="${esc(fmtDay(k))}"></div>`).join('')}
+  `).join('');
+  return `<div class="card"><div class="week"><div></div>${head}${rows}</div>
+    <div class="legend"><span class="cell c-exercise l1"></span> some &nbsp; <span class="cell c-exercise l2"></span> goal reached</div></div>`;
+}
+
+function renderToday() {
+  const k = dayKey();
+  const g = data.settings.goals;
+  const ex = minutesOn(data.exercise, k);
+  const med = minutesOn(data.meditation, k);
+  const card = (css, title, value, ratio, streak, action) => `
+    <div class="card habit-card ${css}">
+      <div class="title">${title}</div>
+      <div class="value">${value}</div>
+      <div class="bar"><i style="width:${Math.min(100, Math.round(ratio * 100))}%"></i></div>
+      <div class="muted">🔥 ${streak} day streak</div>
+      ${action}
+    </div>`;
+
+  let fastCard;
+  if (data.activeFast) {
+    fastCard = card('c-fasting', 'Fasting', '<span id="today-fast-time">00:00:00</span>', 0,
+      currentStreak('fasting'), '<a class="btn" href="#fasting">Open fast</a>')
+      .replace('<i style="width:0%">', '<i id="today-fast-bar" style="width:0%">');
+  } else {
+    const last = [...data.fasting].sort((a, b) => b.end.localeCompare(a.end))[0];
+    const value = last ? `${fastHours(last).toFixed(1)} h` : '—';
+    const ratio = last ? fastHours(last) / last.goalHours : 0;
+    fastCard = card('c-fasting', last ? 'Fasting · last fast' : 'Fasting', value, ratio,
+      currentStreak('fasting'), '<button class="btn" type="button" data-action="start-fast">Start fast</button>');
+  }
+
+  return `
+    <h2>${esc(parseKey(k).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }))}</h2>
+    <div class="cards">
+      ${card('c-exercise', 'Exercise', `${ex} / ${g.exerciseMin} min`, ex / g.exerciseMin, currentStreak('exercise'),
+        '<a class="btn" href="#exercise">Log exercise</a>')}
+      ${card('c-meditation', 'Meditation', `${med} / ${g.meditationMin} min`, med / g.meditationMin, currentStreak('meditation'),
+        '<a class="btn" href="#meditate">Meditate</a>')}
+      ${fastCard}
+    </div>
+    <h3>Last 7 days</h3>
+    ${weekGrid()}`;
+}
+
+function renderExercise() {
+  const items = [...data.exercise].sort(byDateDesc).slice(0, 50);
+  return `
+    <h2 class="c-exercise">🏃 Exercise</h2>
+    <div class="card c-exercise">
+      <form id="exercise-form">
+        <div class="row">
+          <label>Date <input name="date" type="date" value="${dayKey()}" max="${dayKey()}" required></label>
+          <label>Minutes <input name="minutes" type="number" min="1" max="1440" inputmode="numeric" value="30" required></label>
+        </div>
+        <div class="row">
+          <label>Type <select name="type">${options(EXERCISE_TYPES, 'Walking')}</select></label>
+          <label>Intensity <select name="intensity">${options(INTENSITIES, 'Moderate')}</select></label>
+        </div>
+        <label>Notes <textarea name="notes" rows="2" maxlength="500" placeholder="Optional"></textarea></label>
+        <button class="btn" type="submit">Save exercise</button>
+      </form>
+    </div>
+    <h3>Recent</h3>
+    <div class="card">${entryList('exercise', items, (e) => `
+      <strong>${esc(e.type)}</strong> · ${esc(e.minutes)} min · ${esc(e.intensity)}
+      <div class="muted">${esc(fmtDay(e.date))}</div>
+      ${e.notes ? `<div class="muted notes">${esc(e.notes)}</div>` : ''}`)}
+    </div>`;
+}
+
+// Meditation timer state (kept in memory only).
+const med = { totalMs: 10 * 60000, remainingMs: 10 * 60000, endAt: null, type: 'Mindfulness' };
+let audioCtx = null;
+let wakeLock = null;
+
+function medRemaining() {
+  return med.endAt ? med.endAt - Date.now() : med.remainingMs;
+}
+
+function renderMeditate() {
+  const items = [...data.meditation].sort(byDateDesc).slice(0, 50);
+  const running = !!med.endAt;
+  const started = running || med.remainingMs < med.totalMs;
+  const presetMin = Math.round(med.totalMs / 60000);
+  return `
+    <h2 class="c-meditation">🧘 Meditation</h2>
+    <div class="card timer c-meditation">
+      <div class="chips" style="justify-content:center">
+        ${MED_PRESETS.map((m) => `<button type="button" class="chip${m === presetMin ? ' on' : ''}" data-action="med-preset" data-min="${m}" ${started ? 'disabled' : ''}>${m} min</button>`).join('')}
+      </div>
+      <div class="big-time" id="med-time">${fmtMinSec(medRemaining())}</div>
+      <label style="max-width:260px;margin:0 auto 12px">Type
+        <select id="med-type">${options(MEDITATION_TYPES, med.type)}</select>
+      </label>
+      <div class="btn-row">
+        ${running
+          ? '<button class="btn" type="button" data-action="med-pause">Pause</button>'
+          : `<button class="btn" type="button" data-action="med-start">${started ? 'Resume' : 'Start'}</button>`}
+        ${started ? '<button class="btn secondary" type="button" data-action="med-stop">Finish now</button>' : ''}
+        ${started ? '<button class="btn secondary" type="button" data-action="med-reset">Reset</button>' : ''}
+      </div>
+      <p class="muted">A soft bell rings at the end. The session is saved for you.</p>
+    </div>
+
+    <h3>Add a session by hand</h3>
+    <div class="card c-meditation">
+      <form id="meditation-form">
+        <div class="row">
+          <label>Date <input name="date" type="date" value="${dayKey()}" max="${dayKey()}" required></label>
+          <label>Minutes <input name="minutes" type="number" min="1" max="600" inputmode="numeric" value="10" required></label>
+        </div>
+        <div class="row">
+          <label>Type <select name="type">${options(MEDITATION_TYPES, 'Mindfulness')}</select></label>
+          <label>Mood after <select name="mood">
+            <option value="">—</option><option value="1">😞 1</option><option value="2">😕 2</option>
+            <option value="3">😐 3</option><option value="4">🙂 4</option><option value="5">😄 5</option>
+          </select></label>
+        </div>
+        <label>Notes <textarea name="notes" rows="2" maxlength="500" placeholder="Optional"></textarea></label>
+        <button class="btn" type="submit">Save session</button>
+      </form>
+    </div>
+
+    <h3>Recent</h3>
+    <div class="card">${entryList('meditation', items, (e) => `
+      <strong>${esc(e.type)}</strong> · ${esc(e.minutes)} min${e.mood ? ` · mood ${esc(e.mood)}/5` : ''}
+      <div class="muted">${esc(fmtDay(e.date))}</div>
+      ${e.notes ? `<div class="muted notes">${esc(e.notes)}</div>` : ''}`)}
+    </div>`;
+}
+
+const RING_C = 2 * Math.PI * 90;
+
+function renderFasting() {
+  const g = data.settings.goals;
+  const items = [...data.fasting].sort((a, b) => b.end.localeCompare(a.end)).slice(0, 50);
+  const now = toLocalInput(new Date().toISOString());
+  let top;
+  if (data.activeFast) {
+    const f = data.activeFast;
+    const goalEnd = new Date(new Date(f.start).getTime() + f.goalHours * 3600000).toISOString();
+    top = `
+      <div class="card timer c-fasting">
+        <div class="ring">
+          <svg viewBox="0 0 220 220" aria-hidden="true">
+            <circle class="track" cx="110" cy="110" r="90"></circle>
+            <circle class="prog" id="fast-ring" cx="110" cy="110" r="90"
+              stroke-dasharray="${RING_C}" stroke-dashoffset="${RING_C}"></circle>
+          </svg>
+          <div class="inner">
+            <div class="muted">Fasting for</div>
+            <div class="big-time" id="fast-time">00:00:00</div>
+            <div class="muted" id="fast-pct">0%</div>
+          </div>
+        </div>
+        <p id="fast-left" class="muted"></p>
+        <p>Goal <b>${esc(f.goalHours)} h</b> · reach it at <b>${esc(fmtDateTime(goalEnd))}</b></p>
+        <label style="max-width:280px;margin:0 auto 12px">Started at
+          <input type="datetime-local" id="fast-start-edit" value="${toLocalInput(f.start)}" max="${now}">
+        </label>
+        <div class="btn-row">
+          <button class="btn" type="button" data-action="end-fast">End fast</button>
+          <button class="btn secondary" type="button" data-action="cancel-fast">Cancel</button>
+        </div>
+      </div>`;
+  } else {
+    top = `
+      <div class="card c-fasting">
+        <form id="start-fast-form">
+          <label>Goal
+            <select name="goal">${FAST_GOALS.map((h) => `<option value="${h}"${h === g.fastHours ? ' selected' : ''}>${h} hours${h === 16 ? ' (16:8)' : h === 18 ? ' (18:6)' : h === 20 ? ' (20:4)' : h === 24 ? ' (OMAD)' : ''}</option>`).join('')}</select>
+          </label>
+          <label>Start time (leave as now, or pick an earlier time)
+            <input name="start" type="datetime-local" value="${now}" max="${now}">
+          </label>
+          <button class="btn" type="submit">Start fast</button>
+        </form>
+      </div>`;
+  }
+  return `
+    <h2 class="c-fasting">⏳ Fasting</h2>
+    ${top}
+    <h3>Add a past fast</h3>
+    <div class="card c-fasting">
+      <form id="fast-form">
+        <div class="row">
+          <label>Start <input name="start" type="datetime-local" max="${now}" required></label>
+          <label>End <input name="end" type="datetime-local" max="${now}" required></label>
+        </div>
+        <label>Goal <select name="goal">${FAST_GOALS.map((h) => `<option value="${h}"${h === g.fastHours ? ' selected' : ''}>${h} hours</option>`).join('')}</select></label>
+        <button class="btn" type="submit">Save fast</button>
+      </form>
+    </div>
+    <h3>Recent</h3>
+    <div class="card">${entryList('fasting', items, (f) => {
+      const h = fastHours(f);
+      return `<strong>${h.toFixed(1)} h</strong> of ${esc(f.goalHours)} h
+        ${h >= f.goalHours ? '<span class="badge">goal reached</span>' : '<span class="badge no">short</span>'}
+        <div class="muted">${esc(fmtDateTime(f.start))} → ${esc(fmtTime(f.end))}${dayKey(f.start) !== dayKey(f.end) ? ` (${esc(fmtDay(dayKey(f.end)))})` : ''}</div>`;
+    })}
+    </div>`;
+}
+
+function heatmap(habit, css, weeks = 18) {
+  const today = dayKey();
+  const dow = (parseKey(today).getDay() + 6) % 7; // Monday = 0
+  const start = addDays(today, -dow - 7 * (weeks - 1));
+  let cells = '';
+  for (let i = 0; i < weeks * 7; i++) {
+    const k = addDays(start, i);
+    cells += k > today
+      ? '<div class="cell future"></div>'
+      : `<div class="cell ${css} l${level(habit, k)}${k === today ? ' today' : ''}" title="${esc(fmtDay(k))}"></div>`;
+  }
+  return `<div class="heat">${cells}</div>`;
+}
+
+function renderHistory() {
+  const sections = HABITS.map((h) => {
+    const w = sumRange(h.key, 7);
+    const m = sumRange(h.key, 30);
+    let stats;
+    if (h.key === 'fasting') {
+      const longest = data.fasting.reduce((mx, f) => Math.max(mx, fastHours(f)), 0);
+      stats = [
+        [w.count, 'fasts this week'],
+        [m.count ? (m.hours / m.count).toFixed(1) + ' h' : '—', 'average (30 days)'],
+        [longest ? longest.toFixed(1) + ' h' : '—', 'longest fast'],
+      ];
+    } else {
+      stats = [
+        [w.minutes + ' min', 'this week'],
+        [m.minutes + ' min', 'last 30 days'],
+        [m.count, 'sessions (30 days)'],
+      ];
+    }
+    stats.push([currentStreak(h.key) + ' d', 'current streak'], [bestStreak(h.key) + ' d', 'best streak']);
+    return `
+      <div class="card ${h.css}">
+        <h3 style="margin-top:0;color:var(--c)">${h.label}</h3>
+        ${heatmap(h.key, h.css)}
+        <div class="legend">Less <span class="cell"></span><span class="cell ${h.css} l1"></span><span class="cell ${h.css} l2"></span> Goal reached</div>
+        <div class="stats">${stats.map(([v, l]) => `<div class="stat"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('')}</div>
+      </div>`;
+  }).join('');
+  return `<h2>📅 History</h2><p class="muted">The last 18 weeks. Each square is one day.</p>${sections}`;
+}
+
+function renderSettings() {
+  const g = data.settings.goals;
+  const origin = location.origin && location.origin !== 'null' ? location.origin : '(open this app from a web server)';
+  return `
+    <h2>⚙️ Settings</h2>
+    <div class="card">
+      <h3 style="margin-top:0">Daily goals</h3>
+      <form id="goals-form">
+        <div class="row">
+          <label>Exercise (min/day) <input name="exerciseMin" type="number" min="1" max="600" value="${esc(g.exerciseMin)}" required></label>
+          <label>Meditation (min/day) <input name="meditationMin" type="number" min="1" max="600" value="${esc(g.meditationMin)}" required></label>
+        </div>
+        <label>Default fasting goal
+          <select name="fastHours">${FAST_GOALS.map((h) => `<option value="${h}"${h === g.fastHours ? ' selected' : ''}>${h} hours</option>`).join('')}</select>
+        </label>
+        <button class="btn" type="submit">Save goals</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">☁️ Google Drive backup</h3>
+      <p id="drive-status" class="muted"></p>
+      <form id="client-form">
+        <label>Google OAuth Client ID
+          <input name="clientId" value="${esc(meta.clientId)}" placeholder="1234-abc.apps.googleusercontent.com" autocomplete="off" spellcheck="false">
+        </label>
+        <button class="btn secondary" type="submit">Save Client ID</button>
+      </form>
+      <div class="btn-row" style="margin-top:12px">
+        ${meta.connected
+          ? `<button class="btn" type="button" data-action="backup-now">Back up now</button>
+             <button class="btn secondary" type="button" data-action="restore">Restore from Drive</button>
+             <button class="btn secondary" type="button" data-action="disconnect">Disconnect</button>`
+          : `<button class="btn" type="button" data-action="connect" ${meta.clientId ? '' : 'disabled'}>Connect Google Drive</button>`}
+      </div>
+      <label class="check" style="margin-top:12px">
+        <input type="checkbox" id="auto-backup" ${meta.autoBackup ? 'checked' : ''}> Back up automatically after each change
+      </label>
+      <details class="help" style="margin-top:12px">
+        <summary>How to get a Client ID (one time, about 5 minutes)</summary>
+        <ol>
+          <li>Open <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> and create a project.</li>
+          <li>Go to <b>APIs &amp; Services → Library</b> and turn on <b>Google Drive API</b>.</li>
+          <li>Go to <b>OAuth consent screen</b>. Pick <b>External</b>, fill in the app name and your email, and add yourself as a <b>test user</b>.</li>
+          <li>Go to <b>Credentials → Create credentials → OAuth client ID</b>. Pick <b>Web application</b>.</li>
+          <li>Under <b>Authorized JavaScript origins</b> add: <code>${esc(origin)}</code></li>
+          <li>Copy the Client ID and paste it above.</li>
+        </ol>
+        The app can only see the files it creates in your Drive. The backup file is
+        <code>${BACKUP_FILE}</code> in "My Drive". Drive keeps older versions of it too.
+      </details>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">💾 Backup file on this device</h3>
+      <div class="btn-row">
+        <button class="btn secondary" type="button" data-action="export">Download backup (.json)</button>
+        <button class="btn secondary" type="button" data-action="import">Load backup file</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">Danger zone</h3>
+      <button class="btn danger" type="button" data-action="erase">Erase all data on this device</button>
+    </div>`;
+}
+
+// ---------- Live updates (timers) ----------
+
+function tick() {
+  const f = data.activeFast;
+  if (f) {
+    const elapsed = Date.now() - new Date(f.start).getTime();
+    const goalMs = f.goalHours * 3600000;
+    const ratio = elapsed / goalMs;
+    const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+    set('today-fast-time', (el) => { el.textContent = fmtClock(elapsed); });
+    set('today-fast-bar', (el) => { el.style.width = Math.min(100, ratio * 100) + '%'; });
+    set('fast-time', (el) => { el.textContent = fmtClock(elapsed); });
+    set('fast-pct', (el) => { el.textContent = Math.floor(ratio * 100) + '%'; });
+    set('fast-ring', (el) => { el.style.strokeDashoffset = RING_C * (1 - Math.min(1, ratio)); });
+    set('fast-left', (el) => {
+      el.textContent = ratio >= 1 ? '🎉 Goal reached! End the fast when you are ready.' : `${fmtClock(goalMs - elapsed)} to go`;
+    });
+  }
+
+  if (med.endAt) {
+    const left = med.endAt - Date.now();
+    if (left <= 0) {
+      finishMeditation(med.totalMs, true);
+    } else {
+      const el = document.getElementById('med-time');
+      if (el) el.textContent = fmtMinSec(left);
+    }
+  }
+}
+
+// ---------- Meditation timer ----------
+
+function playBell() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = audioCtx.currentTime;
+    for (const [freq, vol] of [[528, 0.35], [1056, 0.12]]) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 4);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 4);
+    }
+  } catch (e) { /* no sound support */ }
+}
+
+async function keepScreenOn(on) {
+  try {
+    if (on && 'wakeLock' in navigator && !wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } else if (!on && wakeLock) {
+      await wakeLock.release();
+      wakeLock = null;
+    }
+  } catch (e) { /* not supported or not allowed */ }
+}
+
+function resetMeditation() {
+  med.endAt = null;
+  med.remainingMs = med.totalMs;
+  keepScreenOn(false);
+}
+
+function finishMeditation(elapsedMs, rang) {
+  const minutes = Math.round(elapsedMs / 60000);
+  resetMeditation();
+  if (rang) playBell();
+  if (minutes >= 1) {
+    data.meditation.push({ id: uid(), date: dayKey(), minutes, type: med.type, mood: '', notes: '', createdAt: new Date().toISOString() });
+    save();
+    toast(`🧘 Saved ${minutes} min of ${med.type.toLowerCase()}.`);
+  } else {
+    render();
+    toast('Session was shorter than 1 minute, so it was not saved.');
+  }
+}
+
+// ---------- Google Drive ----------
+
+let tokenClient = null;
+let tokenWaiter = null;
+let gisLoading = null;
+let backupTimer = null;
+let backupBusy = false;
+let backupError = null;
+
+function loadGis() {
+  if (window.google && google.accounts && google.accounts.oauth2) return Promise.resolve();
+  if (!gisLoading) {
+    gisLoading = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => { gisLoading = null; reject(new Error('Could not load Google sign-in. Check your internet connection.')); };
+      document.head.appendChild(s);
+    });
+  }
+  return gisLoading;
+}
+
+async function initGoogle() {
+  tokenClient = null;
+  if (!meta.clientId) return;
+  await loadGis();
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: meta.clientId,
+    scope: DRIVE_SCOPE,
+    callback: (resp) => {
+      const w = tokenWaiter; tokenWaiter = null;
+      if (!w) return;
+      if (resp.error) return w.reject(new Error(resp.error_description || resp.error));
+      if (!google.accounts.oauth2.hasGrantedAllScopes(resp, DRIVE_SCOPE)) {
+        return w.reject(new Error('Please allow access to Google Drive so the app can save the backup.'));
+      }
+      setToken(resp.access_token, Number(resp.expires_in) || 3600);
+      w.resolve(resp.access_token);
+    },
+    error_callback: (err) => {
+      const w = tokenWaiter; tokenWaiter = null;
+      if (w) w.reject(new Error(err && err.type === 'popup_closed' ? 'The Google sign-in window was closed.' : 'Google sign-in failed.'));
+    },
+  });
+}
+
+function setToken(token, expiresIn) {
+  sessionStorage.setItem(TOKEN_KEY, JSON.stringify({ token, exp: Date.now() + expiresIn * 1000 }));
+}
+function clearToken() {
+  sessionStorage.removeItem(TOKEN_KEY);
+}
+function validToken() {
+  const t = loadJSON(sessionStorage, TOKEN_KEY, null);
+  return t && t.exp - 60000 > Date.now() ? t.token : null;
+}
+
+// Must be called from a click so the browser allows the Google pop-up.
+function requestToken() {
+  return new Promise((resolve, reject) => {
+    if (!tokenClient) {
+      return reject(new Error('Google sign-in is not ready. Check the Client ID and your internet, then try again.'));
+    }
+    tokenWaiter = { resolve, reject };
+    tokenClient.requestAccessToken({ prompt: meta.connected ? '' : 'consent' });
+  });
+}
+
+class NeedSignIn extends Error {}
+
+async function driveFetch(url, opts, interactive) {
+  let token = validToken();
+  if (!token) {
+    if (!interactive) throw new NeedSignIn('Sign in needed');
+    token = await requestToken();
+  }
+  const res = await fetch(url, Object.assign({}, opts, {
+    headers: Object.assign({}, opts && opts.headers, { Authorization: 'Bearer ' + token }),
+  }));
+  if (res.status === 401) {
+    clearToken();
+    if (!interactive) throw new NeedSignIn('Sign in needed');
+    return driveFetch(url, opts, interactive);
+  }
+  return res;
+}
+
+async function driveError(res) {
+  let msg = `Google Drive error ${res.status}`;
+  try {
+    const j = await res.json();
+    if (j.error && j.error.message) msg += ': ' + j.error.message;
+  } catch (e) { /* not JSON */ }
+  return new Error(msg);
+}
+
+async function findBackupFile(interactive) {
+  const q = encodeURIComponent(`name='${BACKUP_FILE}' and trashed=false`);
+  const res = await driveFetch(
+    `https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&orderBy=modifiedTime desc&fields=files(id,modifiedTime)`,
+    {}, interactive);
+  if (!res.ok) throw await driveError(res);
+  const j = await res.json();
+  return j.files && j.files[0] ? j.files[0] : null;
+}
+
+async function uploadBackup(interactive) {
+  const body = JSON.stringify(data, null, 1);
+  let id = meta.fileId;
+  if (!id) {
+    const found = await findBackupFile(interactive);
+    id = found ? found.id : null;
+  }
+  if (id) {
+    const res = await driveFetch(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(id)}?uploadType=media&fields=id`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    }, interactive);
+    if (res.ok) { meta.fileId = id; return; }
+    if (res.status !== 404) throw await driveError(res);
+    id = null; // file was deleted, make a new one
+  }
+  const boundary = 'habit' + uid();
+  const metadata = { name: BACKUP_FILE, mimeType: 'application/json', description: 'Habit Tracker backup' };
+  const multipart =
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${boundary}--`;
+  const res = await driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+    method: 'POST',
+    headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+    body: multipart,
+  }, interactive);
+  if (!res.ok) throw await driveError(res);
+  meta.fileId = (await res.json()).id;
+}
+
+async function downloadBackup(interactive) {
+  const file = await findBackupFile(interactive);
+  if (!file) return null;
+  const res = await driveFetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}?alt=media`, {}, interactive);
+  if (!res.ok) throw await driveError(res);
+  meta.fileId = file.id;
+  return { data: await res.json(), modifiedTime: file.modifiedTime };
+}
+
+function scheduleBackup() {
+  if (!meta.connected) return;
+  meta.pending = true;
+  saveMeta();
+  clearTimeout(backupTimer);
+  if (meta.autoBackup) backupTimer = setTimeout(() => backupNow(false), 2500);
+}
+
+async function backupNow(interactive) {
+  if (!meta.connected) return;
+  if (backupBusy) { scheduleBackup(); return; }
+  clearTimeout(backupTimer);
+  backupBusy = true;
+  renderStatus();
+  const version = data.updatedAt;
+  try {
+    await uploadBackup(interactive);
+    meta.lastBackup = new Date().toISOString();
+    meta.pending = data.updatedAt !== version;
+    backupError = null;
+    if (interactive) toast('☁️ Backed up to Google Drive.');
+  } catch (e) {
+    if (!(e instanceof NeedSignIn)) {
+      backupError = e.message;
+      if (interactive) toast('Backup failed: ' + e.message);
+    }
+  } finally {
+    backupBusy = false;
+    saveMeta();
+    renderStatus();
+    if (meta.pending && meta.autoBackup && validToken()) scheduleBackup();
+  }
+}
+
+function applyBackup(d) {
+  data = normalize(d);
+  localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  render();
+}
+
+async function connectDrive() {
+  try {
+    await requestToken();
+    meta.connected = true;
+    meta.fileId = null;
+    saveMeta();
+    const remote = await downloadBackup(true);
+    if (remote && isValidBackup(remote.data)) {
+      const when = new Date(remote.modifiedTime).toLocaleString();
+      const useRemote = !hasAnyEntries(data) || confirm(
+        `Found a backup in Google Drive (saved ${when}).\n\n` +
+        'OK = load it on this device (replaces the data here).\n' +
+        'Cancel = keep the data on this device and save it to Drive.');
+      if (useRemote) {
+        applyBackup(remote.data);
+        meta.pending = false;
+        meta.lastBackup = remote.modifiedTime;
+        saveMeta();
+        toast('☁️ Connected. Your data was loaded from Google Drive.');
+        render();
+        return;
+      }
+    }
+    render();
+    await backupNow(true);
+  } catch (e) {
+    toast(e.message);
+    render();
+  }
+}
+
+async function restoreDrive() {
+  try {
+    const remote = await downloadBackup(true);
+    if (!remote) return toast('No backup found in Google Drive yet.');
+    if (!isValidBackup(remote.data)) return toast('The backup file in Drive looks damaged.');
+    const when = new Date(remote.modifiedTime).toLocaleString();
+    if (!confirm(`Load the Google Drive backup from ${when}?\nThis replaces the data on this device.`)) return;
+    applyBackup(remote.data);
+    meta.pending = false;
+    meta.lastBackup = remote.modifiedTime;
+    saveMeta();
+    renderStatus();
+    toast('✅ Restored from Google Drive.');
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+function disconnectDrive() {
+  const t = validToken();
+  if (t && window.google && google.accounts && google.accounts.oauth2) google.accounts.oauth2.revoke(t, () => {});
+  clearToken();
+  Object.assign(meta, { connected: false, fileId: null, pending: false });
+  backupError = null;
+  saveMeta();
+  render();
+  toast('Disconnected from Google Drive. Your data is still on this device.');
+}
+
+function renderStatus() {
+  const pill = $('#backup-status');
+  let text, cls, detail;
+  if (!meta.connected) {
+    text = 'Not backed up'; cls = 'warn';
+    detail = meta.clientId ? 'Not connected. Tap "Connect Google Drive".' : 'Add your Google Client ID below to turn on backup.';
+  } else if (backupBusy || (meta.pending && meta.autoBackup && validToken() && !backupError)) {
+    text = 'Backing up…'; cls = '';
+    detail = 'Saving to Google Drive…';
+  } else if (backupError) {
+    text = 'Backup failed'; cls = 'bad';
+    detail = 'Last backup failed: ' + backupError;
+  } else if (meta.pending) {
+    text = 'Tap to back up'; cls = 'warn';
+    detail = 'You have changes that are not in Google Drive yet.' + (meta.lastBackup ? ` Last backup: ${timeAgo(meta.lastBackup)}.` : '');
+  } else {
+    text = meta.lastBackup ? '☁️ ' + timeAgo(meta.lastBackup) : '☁️ Connected'; cls = 'ok';
+    detail = meta.lastBackup ? `Connected. Last backup: ${new Date(meta.lastBackup).toLocaleString()}.` : 'Connected.';
+  }
+  pill.textContent = text;
+  pill.className = 'pill ' + cls;
+  const d = document.getElementById('drive-status');
+  if (d) d.textContent = detail;
+}
+
+// ---------- Local file backup ----------
+
+function exportFile() {
+  const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `habit-tracker-${dayKey()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function importFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let d;
+    try { d = JSON.parse(reader.result); } catch (e) { return toast('This file is not a valid backup.'); }
+    if (!isValidBackup(d)) return toast('This file is not a Habit Tracker backup.');
+    if (!confirm('Load this backup file? It replaces the data on this device.')) return;
+    data = normalize(d);
+    save();
+    toast('✅ Backup file loaded.');
+  };
+  reader.readAsText(file);
+}
+
+// ---------- Events ----------
+
+function formValues(form) {
+  return Object.fromEntries(new FormData(form).entries());
+}
+
+document.addEventListener('submit', (ev) => {
+  const form = ev.target;
+  const v = formValues(form);
+  const now = new Date().toISOString();
+  ev.preventDefault();
+
+  switch (form.id) {
+    case 'exercise-form':
+      data.exercise.push({ id: uid(), date: v.date, minutes: Number(v.minutes), type: v.type, intensity: v.intensity, notes: v.notes.trim(), createdAt: now });
+      save();
+      toast('🏃 Exercise saved.');
+      break;
+
+    case 'meditation-form':
+      data.meditation.push({ id: uid(), date: v.date, minutes: Number(v.minutes), type: v.type, mood: v.mood, notes: v.notes.trim(), createdAt: now });
+      save();
+      toast('🧘 Session saved.');
+      break;
+
+    case 'start-fast-form': {
+      const start = v.start ? new Date(v.start) : new Date();
+      if (start > new Date()) return toast('Start time cannot be in the future.');
+      data.activeFast = { start: start.toISOString(), goalHours: Number(v.goal) };
+      save();
+      toast('⏳ Fast started. You can do it!');
+      break;
+    }
+
+    case 'fast-form': {
+      const start = new Date(v.start), end = new Date(v.end);
+      if (!(end > start)) return toast('End time must be after start time.');
+      if (end > new Date()) return toast('End time cannot be in the future.');
+      data.fasting.push({ id: uid(), start: start.toISOString(), end: end.toISOString(), goalHours: Number(v.goal), createdAt: now });
+      save();
+      toast('⏳ Fast saved.');
+      break;
+    }
+
+    case 'goals-form':
+      data.settings.goals = { exerciseMin: Number(v.exerciseMin), meditationMin: Number(v.meditationMin), fastHours: Number(v.fastHours) };
+      save();
+      toast('Goals saved.');
+      break;
+
+    case 'client-form': {
+      const id = v.clientId.trim();
+      if (id && !/\.apps\.googleusercontent\.com$/.test(id)) {
+        return toast('That does not look like a Client ID. It should end with .apps.googleusercontent.com');
+      }
+      if (id !== meta.clientId) {
+        if (meta.connected) disconnectDrive();
+        meta.clientId = id;
+        saveMeta();
+        initGoogle().catch((e) => toast(e.message));
+      }
+      render();
+      toast(id ? 'Client ID saved. Now tap "Connect Google Drive".' : 'Client ID removed.');
+      break;
+    }
+  }
+});
+
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('[data-action]');
+  if (!btn) return;
+  const a = btn.dataset.action;
+
+  switch (a) {
+    case 'delete': {
+      const list = data[btn.dataset.kind];
+      const i = list.findIndex((e) => e.id === btn.dataset.id);
+      if (i >= 0 && confirm('Delete this entry?')) {
+        list.splice(i, 1);
+        save();
+      }
+      break;
+    }
+
+    case 'start-fast':
+      data.activeFast = { start: new Date().toISOString(), goalHours: data.settings.goals.fastHours };
+      save();
+      toast('⏳ Fast started. You can do it!');
+      break;
+
+    case 'end-fast': {
+      const f = data.activeFast;
+      const end = new Date().toISOString();
+      const hours = (new Date(end) - new Date(f.start)) / 3600000;
+      if (hours < 0.1 && !confirm('This fast is very short. Save it anyway?')) {
+        data.activeFast = null;
+        save();
+        break;
+      }
+      data.fasting.push({ id: uid(), start: f.start, end, goalHours: f.goalHours, createdAt: end });
+      data.activeFast = null;
+      save();
+      toast(hours >= f.goalHours ? `🎉 Great job! You fasted ${hours.toFixed(1)} hours.` : `Fast saved: ${hours.toFixed(1)} hours.`);
+      break;
+    }
+
+    case 'cancel-fast':
+      if (confirm('Cancel this fast? It will not be saved.')) {
+        data.activeFast = null;
+        save();
+      }
+      break;
+
+    case 'med-preset':
+      med.totalMs = med.remainingMs = Number(btn.dataset.min) * 60000;
+      render();
+      break;
+
+    case 'med-start':
+      med.endAt = Date.now() + med.remainingMs;
+      try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (e) { /* no audio */ }
+      keepScreenOn(true);
+      render();
+      break;
+
+    case 'med-pause':
+      med.remainingMs = Math.max(0, med.endAt - Date.now());
+      med.endAt = null;
+      keepScreenOn(false);
+      render();
+      break;
+
+    case 'med-stop':
+      finishMeditation(med.totalMs - medRemaining(), false);
+      break;
+
+    case 'med-reset':
+      resetMeditation();
+      render();
+      break;
+
+    case 'connect': connectDrive(); break;
+    case 'backup-now': backupNow(true); break;
+    case 'restore': restoreDrive(); break;
+    case 'disconnect':
+      if (confirm('Disconnect Google Drive? Backups stop until you connect again.')) disconnectDrive();
+      break;
+    case 'export': exportFile(); break;
+    case 'import': $('#import-file').click(); break;
+    case 'erase':
+      if (confirm('Erase ALL habit data on this device? This cannot be undone.') &&
+          confirm('Are you really sure? Tip: download a backup first.')) {
+        data = defaultData();
+        save();
+        toast('All data on this device was erased.');
+      }
+      break;
+  }
+});
+
+document.addEventListener('change', (ev) => {
+  const t = ev.target;
+  if (t.id === 'med-type') {
+    med.type = t.value;
+  } else if (t.id === 'auto-backup') {
+    meta.autoBackup = t.checked;
+    saveMeta();
+    if (meta.autoBackup && meta.pending) backupNow(false);
+  } else if (t.id === 'fast-start-edit' && data.activeFast && t.value) {
+    const start = new Date(t.value);
+    if (start > new Date()) { toast('Start time cannot be in the future.'); render(); return; }
+    data.activeFast.start = start.toISOString();
+    save();
+  } else if (t.id === 'import-file' && t.files[0]) {
+    importFile(t.files[0]);
+    t.value = '';
+  }
+});
+
+$('#backup-status').addEventListener('click', () => {
+  if (meta.connected && (meta.pending || backupError)) backupNow(true);
+  else location.hash = '#settings';
+});
+
+window.addEventListener('hashchange', showFromHash);
+
+// Keep data in sync if the app is open in two tabs.
+window.addEventListener('storage', (ev) => {
+  if (ev.key === STORE_KEY) { data = normalize(loadJSON(localStorage, STORE_KEY, null)); render(); }
+  if (ev.key === META_KEY) { meta = Object.assign(meta, loadJSON(localStorage, META_KEY, {})); renderStatus(); }
+});
+
+// ---------- Start ----------
+
+showFromHash();
+setInterval(tick, 1000);
+setInterval(renderStatus, 60000);
+initGoogle()
+  .then(() => { if (meta.connected && meta.pending && meta.autoBackup) backupNow(false); })
+  .catch(() => { /* offline: backup will wait */ });
+  </script>
 </body>
 </html>
