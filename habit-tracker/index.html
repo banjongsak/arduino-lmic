@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Habit Tracker</title>
+  <meta name="description" content="Track exercise, meditation and fasting. Back up to Google Drive.">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Habit Tracker</h1>
+    <button id="backup-status" class="pill" type="button" title="Google Drive backup">Not connected</button>
+  </header>
+
+  <main>
+    <section id="view-today" class="view"></section>
+    <section id="view-exercise" class="view" hidden></section>
+    <section id="view-meditate" class="view" hidden></section>
+    <section id="view-fasting" class="view" hidden></section>
+    <section id="view-history" class="view" hidden></section>
+    <section id="view-settings" class="view" hidden></section>
+  </main>
+
+  <nav class="tabbar">
+    <a href="#today" data-view="today"><span>🏠</span>Today</a>
+    <a href="#exercise" data-view="exercise"><span>🏃</span>Exercise</a>
+    <a href="#meditate" data-view="meditate"><span>🧘</span>Meditate</a>
+    <a href="#fasting" data-view="fasting"><span>⏳</span>Fasting</a>
+    <a href="#history" data-view="history"><span>📅</span>History</a>
+    <a href="#settings" data-view="settings"><span>⚙️</span>Settings</a>
+  </nav>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <input id="import-file" type="file" accept="application/json,.json" hidden>
+
+  <script src="app.js"></script>
+</body>
+</html>
